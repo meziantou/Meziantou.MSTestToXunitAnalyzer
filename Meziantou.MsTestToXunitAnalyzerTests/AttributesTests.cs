@@ -136,11 +136,41 @@ public class AttributesTests
             
             public class Sample
             {
-                [Theory()]
+                [Theory]
                 [InlineData("test")]
                 [MemberData("test")]
                 [MemberData("test", MemberType = typeof(object))]
                 public void Test(string a) { }
+            }
+            """;
+
+        await context.RunAsync();
+    }
+
+
+    [Fact]
+    public async Task DataRowWithMultipleArguments()
+    {
+        var context = CreateContext();
+        context.TestCode = """
+            using Microsoft.VisualStudio.TestTools.UnitTesting;
+            using Xunit;
+
+            public class Sample
+            {
+                [{|MSTestXunit202:DataRow("test", "test", "test")|}]
+                public void Test(string a, string b, string c) { }
+            }
+            """;
+
+        context.FixedCode = """
+            using Microsoft.VisualStudio.TestTools.UnitTesting;
+            using Xunit;
+            
+            public class Sample
+            {
+                [InlineData("test", "test", "test")]
+                public void Test(string a, string b, string c) { }
             }
             """;
 

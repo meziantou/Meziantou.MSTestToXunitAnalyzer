@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Operations;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 
 namespace Meziantou.MsTestToXunitAnalyzer;
 
@@ -57,15 +59,15 @@ public sealed class AttributesCodeFixer : CodeFixProvider
             }
             else if (SymbolEqualityComparer.Default.Equals(attributeType, types.MSTestDataTestMethodAttributeSymbol))
             {
-                var args = (attributeOperation.Operation as IObjectCreationOperation)?.Arguments.Select(arg => arg.Syntax) ?? [];
-                var attr = generator.Attribute(generator.TypeExpression(types.XunitTheoryAttributeSymbol), args);
+                var attr = generator.Attribute(generator.TypeExpression(types.XunitTheoryAttributeSymbol));
+                attr = CopyAttributeArguments(attr, attributeOperation);
 
                 editor.ReplaceNode(operation.Syntax, attr);
             }
             else if (SymbolEqualityComparer.Default.Equals(attributeType, types.MSTestDataRowAttributeSymbol))
             {
-                var args = (attributeOperation.Operation as IObjectCreationOperation)?.Arguments.Select(arg => arg.Syntax) ?? [];
-                var attr = generator.Attribute(generator.TypeExpression(types.XunitInlineDataAttributeSymbol), args);
+                var attr = generator.Attribute(generator.TypeExpression(types.XunitInlineDataAttributeSymbol));
+                attr = CopyAttributeArguments(attr, attributeOperation);
 
                 editor.ReplaceNode(operation.Syntax, attr);
             }
@@ -90,10 +92,10 @@ public sealed class AttributesCodeFixer : CodeFixProvider
 
                 SyntaxNode GetMemberType()
                 {
-                    if(objectCreation.Initializer is null)
+                    if (objectCreation.Initializer is null)
                         return null;
 
-                    foreach(var initializer in objectCreation.Initializer.Initializers)
+                    foreach (var initializer in objectCreation.Initializer.Initializers)
                     {
                         if (initializer is not ISimpleAssignmentOperation assignment)
                             continue;
@@ -111,5 +113,15 @@ public sealed class AttributesCodeFixer : CodeFixProvider
         }
 
         return editor.GetChangedDocument();
+    }
+
+    private static SyntaxNode CopyAttributeArguments(SyntaxNode node, IAttributeOperation operation)
+    {
+        if (node is AttributeListSyntax attributeListSyntax && operation.Syntax is AttributeSyntax attributeSyntax)
+        {
+            return attributeListSyntax.ReplaceNode(attributeListSyntax.Attributes[0], attributeListSyntax.Attributes[0].WithArgumentList(attributeSyntax.ArgumentList));
+        }
+
+        throw new InvalidOperationException($"Cannot handle node of type {node.GetType().FullName} or operation of type {operation.Syntax.GetType().FullName}");
     }
 }
