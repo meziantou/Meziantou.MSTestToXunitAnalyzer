@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="Meziantou.MsTestToXunitAnalyzer/Meziantou.MsTestToXunitAnalyzer.csproj" />
+  <Project Path="Meziantou.MsTestToXunitAnalyzerTests/Meziantou.MsTestToXunitAnalyzerTests.csproj" />
+</Solution>
